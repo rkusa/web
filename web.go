@@ -93,16 +93,6 @@ func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	c := make(chan error, 1)
 
 	go func() {
-		// TODO: fix error stack
-		// defer func() {
-		//  err := recover()
-		//  if err != nil {
-		//    c <- err.(error)
-		//  } else {
-		//    c <- nil
-		//  }
-		// }()
-
 		a.Execute(ctx, func(ctx Context) {
 			http.NotFound(ctx, ctx.Req())
 		})
