@@ -22,9 +22,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"strings"
 
+	"github.com/go-errors/errors"
 	gocontext "golang.org/x/net/context"
 )
 
@@ -93,11 +93,17 @@ func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	c := make(chan error, 1)
 
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				c <- errors.Wrap(err, 0)
+			} else {
+				c <- nil
+			}
+		}()
+
 		a.Execute(ctx, func(ctx Context) {
 			http.NotFound(ctx, ctx.Req())
 		})
-
-		c <- nil
 	}()
 
 	select {
@@ -165,12 +171,13 @@ func Mount(path string, mw Middleware) Middleware {
 	}
 }
 
-func handleError(err error, rw http.ResponseWriter) {
-	if err != nil {
+func handleError(e error, rw http.ResponseWriter) {
+	if e != nil {
+		err := errors.Wrap(e, 0)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 
 		l := log.New(os.Stdout, "[web] ", 0)
-		l.Printf("PANIC: %s\n%s", err.Error(), stack())
+		l.Printf("PANIC: %s\n%s", err.Error(), err.ErrorStack())
 	}
 }
 
@@ -178,16 +185,4 @@ func (a *app) Run(addr string) {
 	l := log.New(os.Stdout, "[web] ", 0)
 	l.Printf("listening on %s", addr)
 	l.Fatal(http.ListenAndServe(addr, a))
-}
-
-func stack() []byte {
-	buf := make([]byte, 32)
-	for {
-		n := runtime.Stack(buf, false)
-		if n < len(buf) {
-			break
-		}
-		buf = make([]byte, len(buf)*2)
-	}
-	return buf
 }
