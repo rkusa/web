@@ -45,7 +45,7 @@ type context struct {
 	http.ResponseWriter
 
 	req         *http.Request
-	status      int
+	status      *int
 	beforeFuncs []BeforeResponseFunc
 }
 
@@ -58,8 +58,8 @@ func (c *context) WriteHeader(code int) {
 		fn(c.ResponseWriter)
 	}
 
-	c.status = code
-	c.ResponseWriter.WriteHeader(c.status)
+	*c.status = code
+	c.ResponseWriter.WriteHeader(*c.status)
 }
 
 func (c *context) Before(fn BeforeResponseFunc) {
@@ -67,7 +67,7 @@ func (c *context) Before(fn BeforeResponseFunc) {
 }
 
 func (c *context) Write(b []byte) (int, error) {
-	if c.status == 0 {
+	if *c.status == 0 {
 		c.WriteHeader(http.StatusOK)
 	}
 
@@ -80,7 +80,7 @@ func (c *context) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (c *context) Status() int {
-	return c.status
+	return *c.status
 }
 
 func (c *context) Req() *http.Request {
@@ -88,11 +88,11 @@ func (c *context) Req() *http.Request {
 }
 
 func (c *context) Evolve(ctx gocontext.Context) Context {
-	return &context{ctx, c, c.req, c.status, c.beforeFuncs}
+	return &context{ctx, c.ResponseWriter, c.req, c.status, c.beforeFuncs}
 }
 
 func (c *context) WithValue(key, val interface{}) Context {
-	return &context{gocontext.WithValue(c.Context, key, val), c, c.req, c.status, c.beforeFuncs}
+	return &context{gocontext.WithValue(c.Context, key, val), c.ResponseWriter, c.req, c.status, c.beforeFuncs}
 }
 
 func (c *context) String() string {
@@ -110,11 +110,12 @@ func CreateContext(rw http.ResponseWriter, r *http.Request) Context {
 }
 
 func CreateContextWith(ctx gocontext.Context, rw http.ResponseWriter, r *http.Request) Context {
+	status := 0
 	return &context{
 		Context:        ctx,
 		ResponseWriter: rw,
 		req:            r,
-		status:         0,
+		status:         &status,
 		beforeFuncs:    make([]BeforeResponseFunc, 0),
 	}
 }
