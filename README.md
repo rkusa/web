@@ -2,7 +2,7 @@
 
 Minimal web toolkit build upon [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context).
 
-[![Build Status][drone]](https://ci.rkusa.st/github.com/rkgo/web)
+[![Build Status][drone]](https://ci.rkusa.st/rkgo/web)
 [![GoDoc][godoc]](https://godoc.org/github.com/rkgo/web)
 
 ### Example
@@ -24,5 +24,5 @@ app.Use(routes.Public())
 app.Run("0.0.0.0:3000")
 ```
 
-[drone]: http://ci.rkusa.st/api/badge/github.com/rkgo/web/status.svg?branch=master&style=flat-square
+[drone]: http://ci.rkusa.st/api/badges/rkgo/web/status.svg?style=flat-square
 [godoc]: http://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square
