@@ -33,7 +33,7 @@ type Context interface {
 	Status() int
 
 	// Redirect is a helper method the redirects the current request.
-	Redirect(path string)
+	Redirect(path string, args ...interface{})
 
 	// String returns a string representation of the current context
 	// (for debug purposes)
@@ -99,8 +99,8 @@ func (c *context) String() string {
 	return fmt.Sprintf("%v.WebContext", c.Context)
 }
 
-func (c *context) Redirect(path string) {
-	defer http.Redirect(c, c.req, path, http.StatusFound)
+func (c *context) Redirect(path string, args ...interface{}) {
+	defer http.Redirect(c, c.req, fmt.Sprintf(path, args...), http.StatusFound)
 }
 
 // Create creates and initializes a new Context fromt the given
