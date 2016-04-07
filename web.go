@@ -55,6 +55,9 @@ type App interface {
 
 	// Run a http server on the given address.
 	Run(addr string)
+
+	// Run a http server on the given address.
+	RunTLS(addr, certFile, keyFile string)
 }
 
 type app struct {
@@ -185,4 +188,10 @@ func (a *app) Run(addr string) {
 	l := log.New(os.Stdout, "[web] ", 0)
 	l.Printf("listening on %s", addr)
 	l.Fatal(http.ListenAndServe(addr, a))
+}
+
+func (a *app) RunTLS(addr, certFile, keyFile string) {
+	l := log.New(os.Stdout, "[web] ", 0)
+	l.Printf("listening on %s", addr)
+	l.Fatal(http.ListenAndServeTLS(addr, certFile, keyFile, a))
 }
