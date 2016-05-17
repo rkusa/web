@@ -45,7 +45,7 @@ type App interface {
 	Use(Middleware)
 
 	// Handler can be used to use a http.Handler as a middleware.
-	Handler(http.Handler) Middleware
+	Handler(http.Handler)
 
 	// Execute the middleware stack using the provided context.
 	Execute(Context, Next)
@@ -80,11 +80,8 @@ func (a *app) Use(mw Middleware) {
 	}
 }
 
-func (a *app) Handler(handler http.Handler) Middleware {
-	return func(ctx Context, next Next) {
-		handler.ServeHTTP(ctx, ctx.Req())
-		next(ctx)
-	}
+func (a *app) Handler(handler http.Handler) {
+	a.Use(Handler(handler))
 }
 
 func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -133,6 +130,14 @@ func (a *app) Execute(ctx Context, done Next) {
 	}
 
 	next(ctx)
+}
+
+// Handler can be used to convert http.Handler to a middleware.
+func Handler(handler http.Handler) Middleware {
+	return func(ctx Context, next Next) {
+		handler.ServeHTTP(ctx, ctx.Req())
+		next(ctx)
+	}
 }
 
 // Combine can be used to combine multiple middlewares into one stack.
