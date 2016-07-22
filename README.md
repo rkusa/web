@@ -1,9 +1,9 @@
 # web
 
-Minimal web toolkit build upon [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context).
+Minimal web toolkit build upon the Go 1.7 immutable [context](https://golang.org/pkg/context).
 
-[![Build Status][travis]](https://travis-ci.org/rkgo/web)
-[![GoDoc][godoc]](https://godoc.org/github.com/rkgo/web)
+[![Build Status][travis]](https://travis-ci.org/rkusa/web)
+[![GoDoc][godoc]](https://godoc.org/github.com/rkusa/web)
 
 ### Example
 
@@ -21,8 +21,23 @@ app.Use(sessions.Middleware(
     sessions.NewCookieStore([]byte("secret")),
 ))
 app.Use(routes.Public())
-app.Run("0.0.0.0:3000")
+if err := app.Run("0.0.0.0:3000"); err != nil {
+    log.Fatal(err)
+}
 ```
 
-[travis]: https://api.travis-ci.org/rkgo/web.svg?branch=master
+### Works well with
+
+- [http-assert](https://github.com/rkusa/http-assert)
+- [serve](https://github.com/rkusa/serve)
+- [logger](https://github.com/rkusa/logger)
+- [sessions](https://github.com/rkusa/sessions)
+- [router](https://github.com/rkusa/router)
+- [http-json](https://github.com/rkusa/http-json)
+
+## License
+
+[MIT](LICENSE)
+
+[travis]: https://api.travis-ci.org/rkusa/web.svg
 [godoc]: http://img.shields.io/badge/godoc-reference-blue.svg
