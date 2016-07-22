@@ -22,11 +22,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	// TODO: re-consider go-errors
 )
-
-// TODO: Redirect
-//
 
 // A middleware.
 type Middleware func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
