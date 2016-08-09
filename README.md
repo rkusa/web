@@ -23,7 +23,9 @@ if err := app.Run("0.0.0.0:3000"); err != nil {
 }
 ```
 
-### Context use-cases
+### Request-scoped data
+
+The following shows some examples where request-scoped data is used.
 
 #### Router
 
@@ -41,7 +43,7 @@ r.GET("/user/:id", func(rw http.ResponseWriter, r *http.Request) {
 })
 ```
 
-#### Request-scoped data
+#### Authentication / Current User
 
 The following example authenticates the currently logged in user. On successfull authentication
 the user is added to the context. This allows accessing the current user on succeeding
