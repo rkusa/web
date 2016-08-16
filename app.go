@@ -22,6 +22,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime/debug"
 )
 
 // A middleware.
@@ -91,6 +92,7 @@ func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
+				log.Println("PANIC:", err, string(debug.Stack()))
 				c <- err.(error)
 			} else {
 				c <- nil
@@ -126,7 +128,6 @@ func (a *app) Execute(rw http.ResponseWriter, r *http.Request, done http.Handler
 func (a *app) handleError(err error, rw http.ResponseWriter) {
 	if err != nil {
 		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Printf("PANIC: %s", err.Error())
 	}
 }
 
