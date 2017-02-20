@@ -86,7 +86,13 @@ func (a *app) UseFunc(fn http.HandlerFunc) {
 }
 
 func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw = &responseWriter{rw, 0, false}
+	pusher, ok := rw.(http.Pusher)
+
+	if ok { // push is supported
+		rw = &responseWriterAndPusher{pusher, responseWriter{rw, 0, false}}
+	} else {
+		rw = &responseWriter{rw, 0, false}
+	}
 
 	c := make(chan error, 1)
 	go func() {
@@ -170,4 +176,13 @@ func (rw *responseWriter) Status() int {
 
 func (rw *responseWriter) Written() bool {
 	return rw.written
+}
+
+type responseWriterAndPusher struct {
+	http.Pusher
+	responseWriter
+}
+
+func (p *responseWriterAndPusher) Push(target string, opts *http.PushOptions) error {
+	return p.Pusher.Push(target, opts)
 }
