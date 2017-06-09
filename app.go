@@ -86,12 +86,17 @@ func (a *app) UseFunc(fn http.HandlerFunc) {
 }
 
 func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	pusher, ok := rw.(http.Pusher)
+	var wrapped defaultResponseWriter = &responseWriter{rw, 0, false}
 
-	if ok { // push is supported
-		rw = &responseWriterAndPusher{pusher, responseWriter{rw, 0, false}}
-	} else {
-		rw = &responseWriter{rw, 0, false}
+	switch rw.(type) {
+	case http.Hijacker:
+		wrapped = &struct {
+			defaultResponseWriterAndHijacker
+		}{wrapped.(defaultResponseWriterAndHijacker)}
+	case http.Pusher:
+		wrapped = &struct {
+			defaultResponseWriterAndPusher
+		}{wrapped.(defaultResponseWriterAndPusher)}
 	}
 
 	c := make(chan error, 1)
@@ -105,12 +110,12 @@ func (a *app) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			}
 		}()
 
-		a.Execute(rw, r, func(rw http.ResponseWriter, r *http.Request) {
+		a.Execute(wrapped, r, func(rw http.ResponseWriter, r *http.Request) {
 			http.NotFound(rw, r)
 		})
 	}()
 
-	a.handleError(<-c, rw)
+	a.handleError(<-c, wrapped)
 }
 
 func (a *app) Execute(rw http.ResponseWriter, r *http.Request, done http.HandlerFunc) {
@@ -145,6 +150,22 @@ func (a *app) RunTLS(addr, certFile, keyFile string) error {
 	return http.ListenAndServeTLS(addr, certFile, keyFile, a)
 }
 
+type defaultResponseWriter interface {
+	http.ResponseWriter
+	http.Flusher
+	http.CloseNotifier
+}
+
+type defaultResponseWriterAndHijacker interface {
+	defaultResponseWriter
+	http.Hijacker
+}
+
+type defaultResponseWriterAndPusher interface {
+	defaultResponseWriter
+	http.Pusher
+}
+
 // Custom response writer to keep track whether something has already been written.
 type responseWriter struct {
 	http.ResponseWriter
@@ -166,10 +187,6 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return rw.ResponseWriter.(http.Hijacker).Hijack()
-}
-
 func (rw *responseWriter) Status() int {
 	return rw.status
 }
@@ -178,11 +195,18 @@ func (rw *responseWriter) Written() bool {
 	return rw.written
 }
 
-type responseWriterAndPusher struct {
-	http.Pusher
-	responseWriter
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return rw.ResponseWriter.(http.Hijacker).Hijack()
 }
 
-func (p *responseWriterAndPusher) Push(target string, opts *http.PushOptions) error {
-	return p.Pusher.Push(target, opts)
+func (rw *responseWriter) Flush() {
+	rw.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (rw *responseWriter) CloseNotify() <-chan bool {
+	return rw.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+func (rw *responseWriter) Push(target string, opts *http.PushOptions) error {
+	return rw.ResponseWriter.(http.Pusher).Push(target, opts)
 }
