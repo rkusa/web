@@ -154,6 +154,7 @@ type defaultResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
 	http.CloseNotifier
+	Written() bool
 }
 
 type defaultResponseWriterAndHijacker interface {

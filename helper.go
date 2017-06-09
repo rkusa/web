@@ -44,16 +44,11 @@ func Mount(path string, mw Middleware) Middleware {
 	}
 }
 
-type written interface {
-	http.ResponseWriter
-	Written() bool
-}
-
 // UseHandler wraps a http.Handler into a Middleware.
 func Handler(handler http.Handler) Middleware {
 	return func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		handler.ServeHTTP(rw, r)
-		if rw, ok := rw.(written); ok && !rw.Written() {
+		if rw, ok := rw.(defaultResponseWriter); ok && !rw.Written() {
 			next(rw, r)
 		}
 	}
@@ -63,7 +58,7 @@ func Handler(handler http.Handler) Middleware {
 func Func(fn http.HandlerFunc) Middleware {
 	return func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		fn(rw, r)
-		if rw, ok := rw.(written); ok && !rw.Written() {
+		if rw, ok := rw.(defaultResponseWriter); ok && !rw.Written() {
 			next(rw, r)
 		}
 	}
